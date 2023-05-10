@@ -5,6 +5,7 @@ Omar Castillo Alarcon
 Erwin Cruz Mamani
 Edwin Fredy Chambi Mamani
 Gludher Quispe Cotacallapa
+Etapa de Clasificacion
 """
 import cv2 as cv
 import numpy as np
@@ -14,33 +15,21 @@ import time
 from rembg import remove
 #from PIL import Image
 
-
 print ("Iniciando ")
 time.sleep(1)
-
-
-#cv.namedWindow('piloto', cv.WINDOW_NORMAL)
-#cv.resizeWindow('piloto', 640,480)
 
 hoy = date.today()
 ahora = datetime.now()
 tiempo_actual = ahora.strftime("%H:%M:%S")
 # Objetivos : 
-# - Leer la carpeta de imagenes
-# - Iterar las imagenes en la carpeta
-# - Cada imagen debe eliminar el fondo mediante el uso de REMBG el cual es un
-# wrapper de U2.Net el cual es un modelo de segmentacion semantico.
-# - Una vez borrado el fondo, le aumentamos un fondo negro con una operacion bit a bit
-# contra una imagen de solo negro, de tal forma eliminamos el canal transparente
-# y lo tenemos en matriz de color de fondo negro.
-# - Cada imagen debe detectarse sus valores de componentes de color
+# Leer imagen y obtener parametros, definir que tipo de pimiento es
 # - Guardar los datos en un archivo csv.
 
 print (hoy)
 print (ahora)
 print (tiempo_actual)
 
-archivo = open('medidas_ddbb_2.csv', "w+")
+archivo = open('clasificacion.csv', "w+")
 cadena = ('dia'+";"+'tiempo_actual'+";"+'archivo'+";"
           +'medH'+";"+'medS'+";"+'medV'+";"
           +'medB'+";"+'medG'+";"+'medR'+";"
@@ -49,11 +38,11 @@ cadena = ('dia'+";"+'tiempo_actual'+";"+'archivo'+";"
           +'meH'+";"+'meS'+";"+'meV'+";"
           +'meB'+";"+'meG'+";"+'meR'+";"
           +'meL'+";"+'meA'+";"+'meBB'+";"
-          +'meY'+";"+'meCB'+";"+'meCR'+"\n") 
+          +'meY'+";"+'meCB'+";"+'meCR'+";"+'tipo'+"\n") 
 
 archivo.write(cadena)
 archivo.close()
-
+tipo = 'No cumple'
 carpeta = os.getcwd()
 fotos = str(carpeta+"\\Morrones_ddbb")
 print ("entrando en ... ",fotos)
@@ -247,16 +236,65 @@ for filename in os.listdir(fotos):
         meCB = np.round(meCB,2)
         meCR = np.round(meCR,2)  
         
-        #guardado de los resultados
+        #evaluacion del tipo
+        
+        #parametros de calidad Color Lab Amarillo son
+        Media_L_A = 214
+        sigma_L_A = 5*2
+        
+        Media_A_A = 116 
+        sigma_A_A = 2*2
+        
+        Media_B_A = 210 
+        sigma_B_A = 2*2
+        #
+        #parametros de calidad Color Lab Naranja son
+        Media_L_N = 185 
+        sigma_L_N = 6*2
+        
+        Media_A_N = 138 
+        sigma_A_N = 5*2
+        
+        Media_B_N = 201 
+        sigma_B_N = 2*2
+        #
+        #parametros de calidad Color Lab Rojo son
+        Media_L_R = 123 
+        sigma_L_R = 8*2
+        
+        Media_A_R = 178 
+        sigma_A_R = 3*2
+        
+        Media_B_R = 167
+        sigma_B_R = 4*2
+        #
+        
+        if meL<(Media_L_A + sigma_L_A) and meL >(Media_L_A - sigma_L_A) and \
+            meA<(Media_A_A + sigma_A_A) and meA>(Media_A_A - sigma_A_A) and \
+                meBB<(Media_B_A + sigma_B_A) and meBB>(Media_B_A - sigma_B_A):
+                    tipo = 'amarillo'
+        
+        if meL<(Media_L_N + sigma_L_N) and meL >(Media_L_N - sigma_L_N) and \
+            meA<(Media_A_N + sigma_A_N) and meA>(Media_A_N - sigma_A_N) and \
+                meBB<(Media_B_N + sigma_B_N) and meBB>(Media_B_N - sigma_B_N):
+                    tipo = 'naranja'
+
+        if meL<(Media_L_R + sigma_L_R) and meL >(Media_L_R - sigma_L_R) and \
+            meA<(Media_A_R + sigma_A_R) and meA>(Media_A_R - sigma_A_R) and \
+                meBB<(Media_B_R + sigma_B_R) and meBB>(Media_B_R - sigma_B_R):
+                    tipo = 'rojo'
+        
+        
+            #guardado de los resultados
         hoy = date.today()
         ahora = datetime.now()
         tiempo_actual = ahora.strftime("%H:%M:%S")
         
         print(medH, medS, medV, medB, medG, medR, medL, medA, medBB, medY, medCB, medCR)
-        print(meH, meS, meV, meB, meG, meR, meL, meA, meBB, meY, meCB, meCR)
+        print(meH, meS, meV, meB, meG, meR, meL, meA, meBB, meY, meCB, meCR, tipo)
         
         #titulos
-        archivo = open('medidas_ddbb_2.csv', "a")
+        archivo = open('clasificacion.csv', "a")
         cadena = (str(hoy)+";"+str(tiempo_actual)+";"+str(filename)+";"
                   +str(medH)+";"+str(medS)+";"+str(medV)+";"
                   +str(medB)+";"+str(medG)+";"+str(medR)+";"
@@ -265,53 +303,8 @@ for filename in os.listdir(fotos):
                   +str(meH)+";"+str(meS)+";"+str(meV)+";"
                   +str(meB)+";"+str(meG)+";"+str(meR)+";"
                   +str(meL)+";"+str(meA)+";"+str(meBB)+";"
-                  +str(meY)+";"+str(meCB)+";"+str(meCR)+"\n") 
+                  +str(meY)+";"+str(meCB)+";"+str(meCR)+";"+str(tipo)+"\n") 
         archivo.write(cadena)
         archivo.close()
-        
-        path = ".\salida_ddbb_2\\" 
-        name = 'out_'+filename
-        
-        namel = 'l_'+filename
-        namea = 'a_'+filename
-        namebb = 'bb_'+filename
-        
-        nameh = 'h_'+filename
-        names = 's_'+filename
-        namev = 'v_'+filename
-        
-        nameb = 'b_'+filename
-        nameg = 'g_'+filename
-        namer = 'r_'+filename
-        
-        namey = 'y_'+filename
-        namecb = 'cb_'+filename
-        namecr = 'cr_'+filename
-        
-        namemask = 'mask_'+filename
-        namegray = 'gray_'+filename
-        
-        cv.imwrite(str(path+name), result)
-        cv.imwrite(str(path+namel), l)
-        cv.imwrite(str(path+namea), a)
-        cv.imwrite(str(path+namebb), bb)
-        
-        
-        cv.imwrite(str(path+nameh), h)
-        cv.imwrite(str(path+names), s)
-        cv.imwrite(str(path+namev), v)
-
-        cv.imwrite(str(path+nameb), b)
-        cv.imwrite(str(path+nameg), g)
-        cv.imwrite(str(path+namer), r)
-        
-        cv.imwrite(str(path+namey), y)
-        cv.imwrite(str(path+namecb), cb)
-        cv.imwrite(str(path+namecr), cr)  
-        
-        cv.imwrite(str(path+namemask), mask) 
-            
-        cv.imwrite(str(path+namegray), alpha)  
-        #break  
-
+ 
 cv.destroyAllWindows()
